@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolve 3 Audio Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .player-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .audio-player {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .now-playing {
+            font-size: 1.2em;
+            color: #667eea;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .folder-section {
+            margin-bottom: 40px;
+        }
+
+        .folder-title {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .audio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .audio-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .audio-item:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .audio-item.active {
+            background: #667eea;
+            color: white;
+            border-color: #764ba2;
+        }
+
+        .audio-name {
+            font-weight: 500;
+            word-break: break-word;
+        }
+
+        .play-icon {
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        footer {
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .audio-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎧 Evolve 3 Audio Player</h1>
+            <p class="subtitle">English Learning Audio Resources</p>
+        </header>
+
+        <div class="player-section">
+            <div class="audio-player">
+                <div class="now-playing" id="nowPlaying">Select an audio file to play</div>
+                <audio id="audioPlayer" controls controlsList="nodownload">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+
+        <div class="content">
+            <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search audio files...">
+
+            {% for folder, files in audio_files.items() %}
+            <div class="folder-section">
+                <h2 class="folder-title">📁 {{ folder }}</h2>
+                <div class="audio-grid" data-folder="{{ folder }}">
+                    {% for file in files %}
+                    <div class="audio-item" data-file="{{ file }}" data-folder="{{ folder }}" onclick="playAudio('{{ folder }}', '{{ file }}', this)">
+                        <span class="play-icon">▶️</span>
+                        <span class="audio-name">{{ file.replace('.mp3', '') }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <footer>
+            <p>Evolve 3 Audio Player | Built for easy access to learning materials</p>
+        </footer>
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById('audioPlayer');
+        const nowPlaying = document.getElementById('nowPlaying');
+        const searchBox = document.getElementById('searchBox');
+
+        function playAudio(folder, filename, element) {
+            // Remove active class from all items
+            document.querySelectorAll('.audio-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Add active class to clicked item
+            element.classList.add('active');
+
+            // Update player
+            const audioUrl = `/audio/${encodeURIComponent(folder)}/${encodeURIComponent(filename)}`;
+            audioPlayer.src = audioUrl;
+            audioPlayer.play();
+
+            // Update now playing text
+            nowPlaying.textContent = `Now Playing: ${filename.replace('.mp3', '')}`;
+        }
+
+        // Search functionality
+        searchBox.addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const audioItems = document.querySelectorAll('.audio-item');
+
+            audioItems.forEach(item => {
+                const fileName = item.querySelector('.audio-name').textContent.toLowerCase();
+                if (fileName.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Auto-play next file
+        audioPlayer.addEventListener('ended', function() {
+            const activeItem = document.querySelector('.audio-item.active');
+            if (activeItem) {
+                let nextItem = activeItem.nextElementSibling;
+                
+                // If no next item in current folder, try next folder
+                if (!nextItem) {
+                    const currentGrid = activeItem.closest('.audio-grid');
+                    const nextSection = currentGrid.closest('.folder-section').nextElementSibling;
+                    if (nextSection) {
+                        nextItem = nextSection.querySelector('.audio-item');
+                    }
+                }
+
+                if (nextItem) {
+                    const folder = nextItem.dataset.folder;
+                    const file = nextItem.dataset.file;
+                    playAudio(folder, file, nextItem);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
