@@ -74,36 +74,146 @@
         }
 
         .folder-section {
-            margin-bottom: 40px;
-        }
-
-        .folder-title {
-            font-size: 1.5em;
-            color: #333;
             margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
         }
 
-        .audio-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        .folder-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .folder-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .folder-header.open {
+            border-radius: 10px 10px 0 0;
+        }
+
+        .folder-info {
+            display: flex;
+            align-items: center;
             gap: 15px;
         }
 
-        .audio-item {
+        .folder-icon {
+            font-size: 2em;
+        }
+
+        .folder-details h3 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .folder-count {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .folder-arrow {
+            font-size: 1.5em;
+            transition: transform 0.3s ease;
+        }
+
+        .folder-arrow.open {
+            transform: rotate(90deg);
+        }
+
+        .audio-grid {
+            display: none;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            padding: 20px;
             background: #f8f9fa;
+            border-radius: 0 0 10px 10px;
+            animation: slideDown 0.3s ease;
+        }
+
+        .audio-grid.show {
+            display: grid;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .unit-header {
+            grid-column: 1/-1;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .unit-header:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .unit-header.open {
+            border-radius: 8px 8px 0 0;
+            margin-bottom: 0;
+        }
+
+        .unit-arrow {
+            transition: transform 0.3s ease;
+        }
+
+        .unit-arrow.open {
+            transform: rotate(90deg);
+        }
+
+        .unit-files {
+            display: none;
+            grid-column: 1/-1;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 0 0 8px 8px;
+            margin-bottom: 10px;
+        }
+
+        .unit-files.show {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 10px;
+        }
+
+        .audio-item {
+            background: white;
             padding: 15px;
             border-radius: 10px;
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid transparent;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .audio-item:hover {
             background: #e9ecef;
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
 
         .audio-item.active {
@@ -120,6 +230,27 @@
         .play-icon {
             display: inline-block;
             margin-right: 8px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .search-box {
@@ -174,19 +305,33 @@
         <div class="content">
             <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search audio files...">
 
-            {% for folder, files in audio_files.items() %}
-            <div class="folder-section">
-                <h2 class="folder-title">📁 {{ folder }}</h2>
-                <div class="audio-grid" data-folder="{{ folder }}">
-                    {% for file in files %}
-                    <div class="audio-item" data-file="{{ file }}" data-folder="{{ folder }}" onclick="playAudio('{{ folder }}', '{{ file }}', this)">
-                        <span class="play-icon">▶️</span>
-                        <span class="audio-name">{{ file.replace('.mp3', '') }}</span>
+            {% if folders %}
+                {% for folder_data in folders %}
+                <div class="folder-section" data-folder="{{ folder_data.name }}">
+                    <div class="folder-header" onclick="toggleFolder('{{ folder_data.name }}')">
+                        <div class="folder-info">
+                            <span class="folder-icon">📁</span>
+                            <div class="folder-details">
+                                <h3>{{ folder_data.display_name }}</h3>
+                                <div class="folder-count">{{ folder_data.count }} audio files</div>
+                            </div>
+                        </div>
+                        <span class="folder-arrow">▶</span>
                     </div>
-                    {% endfor %}
+                    <div class="audio-grid" id="folder-{{ loop.index }}">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            <p>Loading files...</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            {% endfor %}
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 40px; color: #666;">
+                    <h3>No audio folders found</h3>
+                    <p>Make sure your MP3 folders are in the same directory as app.py</p>
+                </div>
+            {% endif %}
         </div>
 
         <footer>
@@ -198,6 +343,122 @@
         const audioPlayer = document.getElementById('audioPlayer');
         const nowPlaying = document.getElementById('nowPlaying');
         const searchBox = document.getElementById('searchBox');
+        let loadedFolders = new Set();
+
+        async function toggleFolder(folderName) {
+            const folderSection = document.querySelector(`[data-folder="${folderName}"]`);
+            const folderHeader = folderSection.querySelector('.folder-header');
+            const audioGrid = folderSection.querySelector('.audio-grid');
+            const arrow = folderHeader.querySelector('.folder-arrow');
+
+            // Toggle open/close
+            if (audioGrid.classList.contains('show')) {
+                audioGrid.classList.remove('show');
+                arrow.classList.remove('open');
+                folderHeader.classList.remove('open');
+            } else {
+                audioGrid.classList.add('show');
+                arrow.classList.add('open');
+                folderHeader.classList.add('open');
+
+                // Load files if not already loaded
+                if (!loadedFolders.has(folderName)) {
+                    await loadFolderFiles(folderName, audioGrid);
+                    loadedFolders.add(folderName);
+                }
+            }
+        }
+
+        function toggleUnit(unitId) {
+            const unitFiles = document.getElementById(unitId);
+            const unitHeader = unitFiles.previousElementSibling;
+            const arrow = unitHeader.querySelector('.unit-arrow');
+
+            if (unitFiles.classList.contains('show')) {
+                unitFiles.classList.remove('show');
+                arrow.classList.remove('open');
+                unitHeader.classList.remove('open');
+            } else {
+                unitFiles.classList.add('show');
+                arrow.classList.add('open');
+                unitHeader.classList.add('open');
+            }
+        }
+
+        async function loadFolderFiles(folderName, audioGrid) {
+            try {
+                const response = await fetch(`/api/folder/${encodeURIComponent(folderName)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    audioGrid.innerHTML = '<p style="color: red; padding: 20px;">Error: ' + data.error + '</p>';
+                    return;
+                }
+
+                // Clear loading message
+                audioGrid.innerHTML = '';
+
+                if (!data.structure || data.structure.length === 0) {
+                    audioGrid.innerHTML = '<p style="padding: 20px; color: #666;">No audio files found</p>';
+                    return;
+                }
+
+                // Add items based on structure
+                data.structure.forEach((item, index) => {
+                    if (item.type === 'folder') {
+                        const unitId = `unit-${folderName}-${index}`;
+                        
+                        // Add unit header (collapsible)
+                        const unitHeader = document.createElement('div');
+                        unitHeader.className = 'unit-header';
+                        unitHeader.onclick = function() { toggleUnit(unitId); };
+                        unitHeader.innerHTML = `
+                            <span>📂 ${item.name} (${item.files.length} files)</span>
+                            <span class="unit-arrow">▶</span>
+                        `;
+                        audioGrid.appendChild(unitHeader);
+
+                        // Add unit files container (hidden by default)
+                        const unitFiles = document.createElement('div');
+                        unitFiles.className = 'unit-files';
+                        unitFiles.id = unitId;
+                        
+                        // Add files in this unit
+                        item.files.forEach(file => {
+                            const audioItem = document.createElement('div');
+                            audioItem.className = 'audio-item';
+                            audioItem.dataset.file = file;
+                            audioItem.dataset.folder = item.path;
+                            audioItem.onclick = function() { playAudio(item.path, file, this); };
+                            audioItem.innerHTML = `
+                                <span class="play-icon">▶️</span>
+                                <span class="audio-name">${file.replace('.mp3', '')}</span>
+                            `;
+                            unitFiles.appendChild(audioItem);
+                        });
+                        
+                        audioGrid.appendChild(unitFiles);
+                    } else {
+                        // Direct files (no subfolders)
+                        item.files.forEach(file => {
+                            const audioItem = document.createElement('div');
+                            audioItem.className = 'audio-item';
+                            audioItem.dataset.file = file;
+                            audioItem.dataset.folder = item.path;
+                            audioItem.onclick = function() { playAudio(item.path, file, this); };
+                            audioItem.innerHTML = `
+                                <span class="play-icon">▶️</span>
+                                <span class="audio-name">${file.replace('.mp3', '')}</span>
+                            `;
+                            audioGrid.appendChild(audioItem);
+                        });
+                    }
+                });
+            } catch (error) {
+                audioGrid.innerHTML = '<p style="color: red; padding: 20px;">Error loading files: ' + error.message + '</p>';
+                console.error('Error loading folder:', error);
+            }
+        }
 
         function playAudio(folder, filename, element) {
             // Remove active class from all items
@@ -220,15 +481,62 @@
         // Search functionality
         searchBox.addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
-            const audioItems = document.querySelectorAll('.audio-item');
+            
+            if (searchTerm === '') {
+                // If search is empty, close all folders
+                document.querySelectorAll('.folder-section').forEach(section => {
+                    const audioGrid = section.querySelector('.audio-grid');
+                    const arrow = section.querySelector('.folder-arrow');
+                    const header = section.querySelector('.folder-header');
+                    audioGrid.classList.remove('show');
+                    arrow.classList.remove('open');
+                    header.classList.remove('open');
+                });
+                return;
+            }
 
-            audioItems.forEach(item => {
-                const fileName = item.querySelector('.audio-name').textContent.toLowerCase();
-                if (fileName.includes(searchTerm)) {
-                    item.style.display = 'block';
+            // Open all folders and filter items
+            document.querySelectorAll('.folder-section').forEach(async section => {
+                const folderName = section.dataset.folder;
+                const audioGrid = section.querySelector('.audio-grid');
+                const arrow = section.querySelector('.folder-arrow');
+                const header = section.querySelector('.folder-header');
+
+                // Load folder if not loaded
+                if (!loadedFolders.has(folderName)) {
+                    audioGrid.classList.add('show');
+                    arrow.classList.add('open');
+                    header.classList.add('open');
+                    await loadFolderFiles(folderName, audioGrid);
+                    loadedFolders.add(folderName);
                 } else {
-                    item.style.display = 'none';
+                    audioGrid.classList.add('show');
+                    arrow.classList.add('open');
+                    header.classList.add('open');
                 }
+
+                // Filter items
+                setTimeout(() => {
+                    const audioItems = audioGrid.querySelectorAll('.audio-item');
+                    let hasVisibleItems = false;
+
+                    audioItems.forEach(item => {
+                        const fileName = item.querySelector('.audio-name').textContent.toLowerCase();
+                        if (fileName.includes(searchTerm)) {
+                            item.style.display = 'block';
+                            hasVisibleItems = true;
+                        } else {
+                            item.style.display = 'none';
+                        }
+                    });
+
+                    // Hide folder if no matching items
+                    if (!hasVisibleItems) {
+                        audioGrid.classList.remove('show');
+                        arrow.classList.remove('open');
+                        header.classList.remove('open');
+                    }
+                }, 100);
             });
         });
 
@@ -239,15 +547,21 @@
                 let nextItem = activeItem.nextElementSibling;
                 
                 // If no next item in current folder, try next folder
-                if (!nextItem) {
+                if (!nextItem || nextItem.style.display === 'none') {
                     const currentGrid = activeItem.closest('.audio-grid');
                     const nextSection = currentGrid.closest('.folder-section').nextElementSibling;
                     if (nextSection) {
-                        nextItem = nextSection.querySelector('.audio-item');
+                        const nextFolder = nextSection.dataset.folder;
+                        toggleFolder(nextFolder).then(() => {
+                            nextItem = nextSection.querySelector('.audio-item');
+                            if (nextItem) {
+                                const folder = nextItem.dataset.folder;
+                                const file = nextItem.dataset.file;
+                                playAudio(folder, file, nextItem);
+                            }
+                        });
                     }
-                }
-
-                if (nextItem) {
+                } else if (nextItem) {
                     const folder = nextItem.dataset.folder;
                     const file = nextItem.dataset.file;
                     playAudio(folder, file, nextItem);
